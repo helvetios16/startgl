@@ -12,6 +12,7 @@ struct Node {
   int id;
   float x, y; // Coordenadas en espacio OpenGL [-1, 1]
   NodeState state = NodeState::NORMAL;
+  int parentId = -1; // Para rastrear el árbol de caminos
 };
 
 struct GraphData {

@@ -24,6 +24,7 @@ static float get_distance(const Node &a, const Node &b) {
 
 void Pathfinder::resetGraph(GraphData &graph) {
   for (auto &node : graph.nodes) {
+    node.parentId = -1;
     if (node.state != NodeState::START && node.state != NodeState::END) {
       node.state = NodeState::NORMAL;
     }
@@ -74,6 +75,7 @@ void AStarPathfinder::solve(GraphData &graph) {
       float tentative_g = currentInfo->g + edge.weight;
       if (tentative_g < info[v].g) {
         info[v].parentId = u;
+        graph.nodes[v].parentId = u;
         info[v].g = tentative_g;
         info[v].h = get_distance(graph.nodes[v], graph.nodes[graph.endId]);
         openSet.push(&info[v]);
@@ -138,6 +140,7 @@ void DijkstraPathfinder::solve(GraphData &graph) {
       float tentative_g = currentInfo->g + edge.weight;
       if (tentative_g < info[v].g) {
         info[v].parentId = u;
+        graph.nodes[v].parentId = u;
         info[v].g = tentative_g;
         info[v].h = 0; // h es 0 para Dijkstra
         openSet.push(&info[v]);
