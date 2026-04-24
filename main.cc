@@ -63,6 +63,9 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action,
     std::cout << "Algoritmo seleccionado: Dijkstra" << std::endl;
   } else if (key == GLFW_KEY_N) {
     generateNewGraph();
+  } else if (key == GLFW_KEY_C) {
+    Pathfinder::resetGraph(globalGraph);
+    std::cout << "Grafo limpiado (manteniendo estructura)." << std::endl;
   } else if (key == GLFW_KEY_Q) {
     glfwSetWindowShouldClose(window, GLFW_TRUE);
   } else if (key == GLFW_KEY_SPACE) {
@@ -82,12 +85,15 @@ int main() {
 
   if (!glfwInit())
     return -1;
-  GLFWwindow *window =
-      glfwCreateWindow(800, 800, "OpenGL Pathfinding", NULL, NULL);
+
+  GLFWwindow *window = glfwCreateWindow(
+      800, 800, "OpenGL Node Pathfinding Visualization", NULL, NULL);
+
   if (!window) {
     glfwTerminate();
     return -1;
   }
+
   glfwMakeContextCurrent(window);
   glfwSetKeyCallback(window, key_callback);
 
@@ -98,6 +104,7 @@ int main() {
   std::cout << "[1] Seleccionar A*" << std::endl;
   std::cout << "[2] Seleccionar Dijkstra" << std::endl;
   std::cout << "[N] Generar nuevo grafo" << std::endl;
+  std::cout << "[C] Limpiar solución actual" << std::endl;
   std::cout << "[SPACE] Resolver camino" << std::endl;
   std::cout << "[Q] Salir" << std::endl;
 
