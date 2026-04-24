@@ -17,6 +17,16 @@ public:
   void solve(GraphData &graph) override;
 };
 
+class BFSPathfinder : public IPathfinder {
+public:
+  void solve(GraphData &graph) override;
+};
+
+class DFSPathfinder : public IPathfinder {
+public:
+  void solve(GraphData &graph) override;
+};
+
 class Pathfinder {
 public:
   static void resetGraph(GraphData &graph);

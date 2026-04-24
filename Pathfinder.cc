@@ -1,5 +1,6 @@
 #include "Pathfinder.h"
 #include <cmath>
+#include <iostream>
 #include <queue>
 #include <vector>
 
@@ -159,4 +160,14 @@ void DijkstraPathfinder::solve(GraphData &graph) {
       curr = info[curr].parentId;
     }
   }
+}
+
+void BFSPathfinder::solve(GraphData &graph) {
+  // TODO: Implementar búsqueda por amplitud
+  std::cout << "[INFO] BFS seleccionado (sin implementación)" << std::endl;
+}
+
+void DFSPathfinder::solve(GraphData &graph) {
+  // TODO: Implementar búsqueda por profundidad
+  std::cout << "[INFO] DFS seleccionado (sin implementación)" << std::endl;
 }

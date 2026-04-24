@@ -11,7 +11,7 @@
 
 GraphData globalGraph;
 std::unique_ptr<IPathfinder> currentAlgo;
-enum class AlgoType { ASTAR, DIJKSTRA };
+enum class AlgoType { ASTAR, DIJKSTRA, BFS, DFS };
 AlgoType selectedType = AlgoType::ASTAR;
 
 void generateNewGraph() {
@@ -61,6 +61,14 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action,
     selectedType = AlgoType::DIJKSTRA;
     currentAlgo = std::unique_ptr<DijkstraPathfinder>(new DijkstraPathfinder());
     std::cout << "Algoritmo seleccionado: Dijkstra" << std::endl;
+  } else if (key == GLFW_KEY_3) {
+    selectedType = AlgoType::BFS;
+    currentAlgo = std::unique_ptr<BFSPathfinder>(new BFSPathfinder());
+    std::cout << "Algoritmo seleccionado: BFS" << std::endl;
+  } else if (key == GLFW_KEY_4) {
+    selectedType = AlgoType::DFS;
+    currentAlgo = std::unique_ptr<DFSPathfinder>(new DFSPathfinder());
+    std::cout << "Algoritmo seleccionado: DFS" << std::endl;
   } else if (key == GLFW_KEY_N) {
     generateNewGraph();
   } else if (key == GLFW_KEY_C) {
@@ -103,6 +111,8 @@ int main() {
   std::cout << "--- Controles ---" << std::endl;
   std::cout << "[1] Seleccionar A*" << std::endl;
   std::cout << "[2] Seleccionar Dijkstra" << std::endl;
+  std::cout << "[3] Seleccionar BFS" << std::endl;
+  std::cout << "[4] Seleccionar DFS" << std::endl;
   std::cout << "[N] Generar nuevo grafo" << std::endl;
   std::cout << "[C] Limpiar solución actual" << std::endl;
   std::cout << "[SPACE] Resolver camino" << std::endl;
