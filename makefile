@@ -14,6 +14,6 @@ clean:
 	rm -f $(TARGET)
 
 run: $(TARGET)
-	./$(TARGET); rm ./$(TARGET)
+	./$(TARGET)
 
 .PHONY: all clean run
