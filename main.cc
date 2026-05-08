@@ -13,6 +13,78 @@ GraphData globalGraph;
 std::unique_ptr<IPathfinder> currentAlgo;
 enum class AlgoType { ASTAR, DIJKSTRA, BFS, DFS };
 AlgoType selectedType = AlgoType::ASTAR;
+std::vector<MenuItem> menuItems;
+
+const char *algoName(AlgoType type) {
+  switch (type) {
+  case AlgoType::ASTAR:
+    return "A*";
+  case AlgoType::DIJKSTRA:
+    return "Dijkstra";
+  case AlgoType::BFS:
+    return "BFS";
+  case AlgoType::DFS:
+    return "DFS";
+  }
+  return "A*";
+}
+
+void selectAlgorithm(AlgoType type) {
+  selectedType = type;
+  switch (type) {
+  case AlgoType::ASTAR:
+    currentAlgo = std::unique_ptr<AStarPathfinder>(new AStarPathfinder());
+    break;
+  case AlgoType::DIJKSTRA:
+    currentAlgo = std::unique_ptr<DijkstraPathfinder>(new DijkstraPathfinder());
+    break;
+  case AlgoType::BFS:
+    currentAlgo = std::unique_ptr<BFSPathfinder>(new BFSPathfinder());
+    break;
+  case AlgoType::DFS:
+    currentAlgo = std::unique_ptr<DFSPathfinder>(new DFSPathfinder());
+    break;
+  }
+  std::cout << "Algoritmo seleccionado: " << algoName(type) << std::endl;
+}
+
+void solveGraph() {
+  if (!currentAlgo) {
+    selectAlgorithm(selectedType);
+  }
+  Pathfinder::resetGraph(globalGraph);
+  std::cout << "Resolviendo con " << algoName(selectedType) << "..."
+            << std::endl;
+  currentAlgo->solve(globalGraph);
+}
+
+std::vector<MenuItem> buildMenu() {
+  const float x = 0.63f;
+  const float y = 0.72f;
+  const float width = 0.28f;
+  const float height = 0.07f;
+  const float gap = 0.025f;
+
+  std::vector<MenuItem> items = {
+      {"astar", "A*", "1", x, y, width, height,
+       selectedType == AlgoType::ASTAR},
+      {"dijkstra", "DIJKSTRA", "2", x, y - (height + gap), width, height,
+       selectedType == AlgoType::DIJKSTRA},
+      {"bfs", "BFS", "3", x, y - 2 * (height + gap), width, height,
+       selectedType == AlgoType::BFS},
+      {"dfs", "DFS", "4", x, y - 3 * (height + gap), width, height,
+       selectedType == AlgoType::DFS},
+      {"new", "NUEVO", "N", x, y - 4 * (height + gap), width, height, false},
+      {"clear", "LIMPIAR", "C", x, y - 5 * (height + gap), width, height,
+       false},
+      {"solve", "RESOLVER", "SP", x, y - 6 * (height + gap), width, height,
+       false},
+      {"quit", "SALIR", "Q", x, y - 7 * (height + gap), width, height, false},
+  };
+  return items;
+}
+
+void refreshMenu() { menuItems = buildMenu(); }
 
 void generateNewGraph() {
   globalGraph.nodes.clear();
@@ -22,7 +94,7 @@ void generateNewGraph() {
   for (int i = 0; i < numNodes; ++i) {
     Node n;
     n.id = i;
-    n.x = ((float)rand() / RAND_MAX) * 1.8f - 0.9f;
+    n.x = ((float)rand() / RAND_MAX) * 1.42f - 0.9f;
     n.y = ((float)rand() / RAND_MAX) * 1.8f - 0.9f;
     globalGraph.nodes.push_back(n);
   }
@@ -48,27 +120,41 @@ void generateNewGraph() {
   std::cout << "Nuevo grafo generado." << std::endl;
 }
 
+void handleMenuAction(GLFWwindow *window, const std::string &id) {
+  if (id == "astar") {
+    selectAlgorithm(AlgoType::ASTAR);
+  } else if (id == "dijkstra") {
+    selectAlgorithm(AlgoType::DIJKSTRA);
+  } else if (id == "bfs") {
+    selectAlgorithm(AlgoType::BFS);
+  } else if (id == "dfs") {
+    selectAlgorithm(AlgoType::DFS);
+  } else if (id == "new") {
+    generateNewGraph();
+  } else if (id == "clear") {
+    Pathfinder::resetGraph(globalGraph);
+    std::cout << "Grafo limpiado (manteniendo estructura)." << std::endl;
+  } else if (id == "solve") {
+    solveGraph();
+  } else if (id == "quit") {
+    glfwSetWindowShouldClose(window, GLFW_TRUE);
+  }
+  refreshMenu();
+}
+
 void key_callback(GLFWwindow *window, int key, int scancode, int action,
                   int mods) {
   if (action != GLFW_PRESS)
     return;
 
   if (key == GLFW_KEY_1) {
-    selectedType = AlgoType::ASTAR;
-    currentAlgo = std::unique_ptr<AStarPathfinder>(new AStarPathfinder());
-    std::cout << "Algoritmo seleccionado: A*" << std::endl;
+    selectAlgorithm(AlgoType::ASTAR);
   } else if (key == GLFW_KEY_2) {
-    selectedType = AlgoType::DIJKSTRA;
-    currentAlgo = std::unique_ptr<DijkstraPathfinder>(new DijkstraPathfinder());
-    std::cout << "Algoritmo seleccionado: Dijkstra" << std::endl;
+    selectAlgorithm(AlgoType::DIJKSTRA);
   } else if (key == GLFW_KEY_3) {
-    selectedType = AlgoType::BFS;
-    currentAlgo = std::unique_ptr<BFSPathfinder>(new BFSPathfinder());
-    std::cout << "Algoritmo seleccionado: BFS" << std::endl;
+    selectAlgorithm(AlgoType::BFS);
   } else if (key == GLFW_KEY_4) {
-    selectedType = AlgoType::DFS;
-    currentAlgo = std::unique_ptr<DFSPathfinder>(new DFSPathfinder());
-    std::cout << "Algoritmo seleccionado: DFS" << std::endl;
+    selectAlgorithm(AlgoType::DFS);
   } else if (key == GLFW_KEY_N) {
     generateNewGraph();
   } else if (key == GLFW_KEY_C) {
@@ -77,14 +163,33 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action,
   } else if (key == GLFW_KEY_Q) {
     glfwSetWindowShouldClose(window, GLFW_TRUE);
   } else if (key == GLFW_KEY_SPACE) {
-    if (!currentAlgo) {
-      currentAlgo = std::unique_ptr<AStarPathfinder>(new AStarPathfinder());
+    solveGraph();
+  }
+  refreshMenu();
+}
+
+void mouse_button_callback(GLFWwindow *window, int button, int action,
+                           int mods) {
+  if (button != GLFW_MOUSE_BUTTON_LEFT || action != GLFW_PRESS)
+    return;
+
+  double cursorX;
+  double cursorY;
+  int width;
+  int height;
+  glfwGetCursorPos(window, &cursorX, &cursorY);
+  glfwGetWindowSize(window, &width, &height);
+
+  float x = static_cast<float>((cursorX / width) * 2.0 - 1.0);
+  float y = static_cast<float>(1.0 - (cursorY / height) * 2.0);
+
+  for (const auto &item : menuItems) {
+    bool insideX = x >= item.x && x <= item.x + item.width;
+    bool insideY = y <= item.y && y >= item.y - item.height;
+    if (insideX && insideY) {
+      handleMenuAction(window, item.id);
+      break;
     }
-    Pathfinder::resetGraph(globalGraph);
-    std::cout << "Resolviendo con "
-              << (selectedType == AlgoType::ASTAR ? "A*" : "Dijkstra") << "..."
-              << std::endl;
-    currentAlgo->solve(globalGraph);
   }
 }
 
@@ -104,9 +209,11 @@ int main() {
 
   glfwMakeContextCurrent(window);
   glfwSetKeyCallback(window, key_callback);
+  glfwSetMouseButtonCallback(window, mouse_button_callback);
 
   generateNewGraph();
   currentAlgo = std::unique_ptr<AStarPathfinder>(new AStarPathfinder());
+  refreshMenu();
 
   std::cout << "--- Controles ---" << std::endl;
   std::cout << "[1] Seleccionar A*" << std::endl;
@@ -122,7 +229,7 @@ int main() {
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    Visualizer::draw(globalGraph);
+    Visualizer::draw(globalGraph, menuItems);
 
     glfwSwapBuffers(window);
     glfwPollEvents();
