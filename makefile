@@ -3,7 +3,8 @@ CXXFLAGS = -Wall -std=c++11
 LIBS = -lGL -lglfw
 
 TARGET = pathnode
-SRC = main.cc Visualizer.cc Pathfinder.cc
+SRC = main.cc Visualizer.cc Pathfinder.cc AStarPathfinder.cc \
+      DijkstraPathfinder.cc BFSPathfinder.cc DFSPathfinder.cc
 
 all: $(TARGET)
 
