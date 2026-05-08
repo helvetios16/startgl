@@ -281,7 +281,7 @@ void Visualizer::draw(const GraphData &graph,
   glLineWidth(1.0f);
 
   // Dibujar nodos
-  glPointSize(10.5f);
+  glPointSize(13.0f);
   glBegin(GL_POINTS);
   for (const auto &node : graph.nodes) {
     switch (node.state) {
@@ -310,13 +310,13 @@ void Visualizer::draw(const GraphData &graph,
 
   if (selectedNodeId >= 0 && selectedNodeId < (int)graph.nodes.size()) {
     const Node &node = graph.nodes[selectedNodeId];
-    glPointSize(17.0f);
+    glPointSize(20.0f);
     glColor3f(1.0f, 0.95f, 0.35f);
     glBegin(GL_POINTS);
     glVertex2f(node.x, node.y);
     glEnd();
 
-    glPointSize(9.0f);
+    glPointSize(11.0f);
     glColor3f(0.10f, 0.10f, 0.10f);
     glBegin(GL_POINTS);
     glVertex2f(node.x, node.y);
