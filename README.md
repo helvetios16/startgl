@@ -11,21 +11,23 @@ Un visualizador de algoritmos de búsqueda de caminos desarrollado en C++ utiliz
 
 ## Algoritmos Implementados
 
-- A* (A-Star)
+- A\* (A-Star)
 - Dijkstra
 - BFS (Breadth-First Search)
 - DFS (Depth-First Search)
 
 ## Requisitos Previos
 
-Asegúrate de tener instaladas las librerías de desarrollo de OpenGL y GLFW en tu sistema:
+Librerías de desarrollo de OpenGL y GLFW:
 
 ### Fedora
+
 ```bash
 sudo dnf install glfw-devel mesa-libGL-devel
 ```
 
 ### Linux (Debian/Ubuntu)
+
 ```bash
 sudo apt-get install libglfw3-dev libgl1-mesa-dev
 ```
@@ -35,15 +37,19 @@ sudo apt-get install libglfw3-dev libgl1-mesa-dev
 El proyecto incluye un `makefile` para facilitar la gestión del ciclo de vida del software:
 
 - **Compilar el proyecto:**
+
   ```bash
   make
   ```
+
   Esto generará el ejecutable llamado `pathnode`.
 
 - **Ejecutar la aplicación:**
+
   ```bash
   make run
   ```
+
   Compila (si es necesario) e inicia el visualizador automáticamente.
 
 - **Limpiar archivos generados:**
