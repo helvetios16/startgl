@@ -190,8 +190,8 @@ void drawText(const std::string &text, float x, float y, float scale, float r,
 
 void drawMenu(const std::vector<MenuItem> &menu) {
   // Panel de fondo
-  drawRect(0.59f, 0.90f, 0.40f, 1.02f, 0.11f, 0.12f, 0.14f);
-  drawRectOutline(0.59f, 0.90f, 0.40f, 1.02f, 0.18f, 0.19f, 0.22f);
+  drawRect(0.59f, 0.90f, 0.40f, 1.10f, 0.11f, 0.12f, 0.14f);
+  drawRectOutline(0.59f, 0.90f, 0.40f, 1.10f, 0.18f, 0.19f, 0.22f);
 
   // Header
   drawRect(0.60f, 0.89f, 0.39f, 0.055f, 0.13f, 0.14f, 0.16f);

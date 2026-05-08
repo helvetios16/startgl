@@ -16,6 +16,17 @@ AlgoType selectedType = AlgoType::ASTAR;
 std::vector<MenuItem> menuItems;
 bool editConnections = false;
 int selectedConnectionNode = -1;
+std::vector<SearchFrame> animationFrames;
+int animationFrameIndex = -1;
+bool animationPlaying = false;
+double lastAnimationStep = 0.0;
+const double animationStepSeconds = 0.16;
+
+void clearAnimation() {
+  animationPlaying = false;
+  animationFrames.clear();
+  animationFrameIndex = -1;
+}
 
 const char *algoName(AlgoType type) {
   switch (type) {
@@ -32,6 +43,7 @@ const char *algoName(AlgoType type) {
 }
 
 void selectAlgorithm(AlgoType type) {
+  clearAnimation();
   selectedType = type;
   switch (type) {
   case AlgoType::ASTAR:
@@ -58,6 +70,7 @@ void solveGraph() {
   std::cout << "Resolviendo con " << algoName(selectedType) << "..."
             << std::endl;
   currentAlgo->solve(globalGraph);
+  clearAnimation();
 }
 
 std::vector<MenuItem> buildMenu() {
@@ -83,7 +96,10 @@ std::vector<MenuItem> buildMenu() {
        false},
       {"edit", "EDITAR", "E", x, y - 7 * (height + gap), width, height,
        editConnections},
-      {"quit", "SALIR", "Q", x, y - 8 * (height + gap), width, height, false},
+      {"anim", "ANIM", "V", x, y - 8 * (height + gap), width, height,
+       animationPlaying},
+      {"step", "PASO", "P", x, y - 9 * (height + gap), width, height, false},
+      {"quit", "SALIR", "Q", x, y - 10 * (height + gap), width, height, false},
   };
   return items;
 }
@@ -122,7 +138,62 @@ void generateNewGraph() {
   globalGraph.nodes[globalGraph.startId].state = NodeState::START;
   globalGraph.nodes[globalGraph.endId].state = NodeState::END;
   selectedConnectionNode = -1;
+  clearAnimation();
   std::cout << "Nuevo grafo generado." << std::endl;
+}
+
+void applyAnimationFrame(int index) {
+  if (index < 0 || index >= (int)animationFrames.size())
+    return;
+
+  const SearchFrame &frame = animationFrames[index];
+  for (int i = 0; i < (int)globalGraph.nodes.size(); ++i) {
+    globalGraph.nodes[i].state = frame.states[i];
+    globalGraph.nodes[i].parentId = frame.parents[i];
+  }
+  animationFrameIndex = index;
+}
+
+void prepareAnimation() {
+  if (!currentAlgo) {
+    selectAlgorithm(selectedType);
+  }
+
+  Pathfinder::resetGraph(globalGraph);
+  animationFrames = currentAlgo->solveSteps(globalGraph);
+  animationFrameIndex = -1;
+  if (!animationFrames.empty()) {
+    applyAnimationFrame(0);
+  }
+}
+
+void advanceAnimationStep() {
+  if (animationFrames.empty()) {
+    prepareAnimation();
+  }
+
+  int nextIndex = animationFrameIndex + 1;
+  if (nextIndex >= (int)animationFrames.size()) {
+    animationPlaying = false;
+    return;
+  }
+
+  applyAnimationFrame(nextIndex);
+}
+
+void toggleAnimationPlayback() {
+  editConnections = false;
+  selectedConnectionNode = -1;
+
+  if (animationFrames.empty() ||
+      animationFrameIndex >= (int)animationFrames.size() - 1) {
+    prepareAnimation();
+  }
+
+  animationPlaying = !animationPlaying;
+  lastAnimationStep = glfwGetTime();
+  std::cout << "Animacion: " << (animationPlaying ? "reproduciendo" : "pausada")
+            << std::endl;
 }
 
 bool hasConnection(int u, int v) {
@@ -152,6 +223,7 @@ void toggleConnection(int u, int v) {
   if (u == v)
     return;
 
+  clearAnimation();
   Pathfinder::resetGraph(globalGraph);
   if (hasConnection(u, v)) {
     removeDirectedConnection(u, v);
@@ -188,6 +260,7 @@ int findNodeAt(float x, float y) {
 void toggleEditConnections() {
   editConnections = !editConnections;
   selectedConnectionNode = -1;
+  animationPlaying = false;
   std::cout << "Edicion de conexiones: "
             << (editConnections ? "activada" : "desactivada") << std::endl;
 }
@@ -205,11 +278,19 @@ void handleMenuAction(GLFWwindow *window, const std::string &id) {
     generateNewGraph();
   } else if (id == "clear") {
     Pathfinder::resetGraph(globalGraph);
+    clearAnimation();
     std::cout << "Grafo limpiado (manteniendo estructura)." << std::endl;
   } else if (id == "solve") {
     solveGraph();
   } else if (id == "edit") {
     toggleEditConnections();
+  } else if (id == "anim") {
+    toggleAnimationPlayback();
+  } else if (id == "step") {
+    animationPlaying = false;
+    editConnections = false;
+    selectedConnectionNode = -1;
+    advanceAnimationStep();
   } else if (id == "quit") {
     glfwSetWindowShouldClose(window, GLFW_TRUE);
   }
@@ -233,6 +314,7 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action,
     generateNewGraph();
   } else if (key == GLFW_KEY_C) {
     Pathfinder::resetGraph(globalGraph);
+    clearAnimation();
     std::cout << "Grafo limpiado (manteniendo estructura)." << std::endl;
   } else if (key == GLFW_KEY_Q) {
     glfwSetWindowShouldClose(window, GLFW_TRUE);
@@ -240,6 +322,13 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action,
     solveGraph();
   } else if (key == GLFW_KEY_E) {
     toggleEditConnections();
+  } else if (key == GLFW_KEY_V) {
+    toggleAnimationPlayback();
+  } else if (key == GLFW_KEY_P) {
+    animationPlaying = false;
+    editConnections = false;
+    selectedConnectionNode = -1;
+    advanceAnimationStep();
   }
   refreshMenu();
 }
@@ -316,11 +405,22 @@ int main() {
   std::cout << "[C] Limpiar solución actual" << std::endl;
   std::cout << "[SPACE] Resolver camino" << std::endl;
   std::cout << "[E] Editar conexiones (clic en dos nodos)" << std::endl;
+  std::cout << "[V] Reproducir/pausar animacion" << std::endl;
+  std::cout << "[P] Avanzar un paso de animacion" << std::endl;
   std::cout << "[Q] Salir" << std::endl;
 
   while (!glfwWindowShouldClose(window)) {
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
+
+    if (animationPlaying) {
+      double now = glfwGetTime();
+      if (now - lastAnimationStep >= animationStepSeconds) {
+        advanceAnimationStep();
+        lastAnimationStep = now;
+        refreshMenu();
+      }
+    }
 
     Visualizer::draw(globalGraph, menuItems, selectedConnectionNode);
 
