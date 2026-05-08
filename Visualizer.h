@@ -22,5 +22,6 @@ struct MenuItem {
 
 class Visualizer {
 public:
-  static void draw(const GraphData &graph, const std::vector<MenuItem> &menu);
+  static void draw(const GraphData &graph, const std::vector<MenuItem> &menu,
+                   int selectedNodeId);
 };

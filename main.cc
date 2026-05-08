@@ -14,6 +14,8 @@ std::unique_ptr<IPathfinder> currentAlgo;
 enum class AlgoType { ASTAR, DIJKSTRA, BFS, DFS };
 AlgoType selectedType = AlgoType::ASTAR;
 std::vector<MenuItem> menuItems;
+bool editConnections = false;
+int selectedConnectionNode = -1;
 
 const char *algoName(AlgoType type) {
   switch (type) {
@@ -60,10 +62,10 @@ void solveGraph() {
 
 std::vector<MenuItem> buildMenu() {
   const float x = 0.63f;
-  const float y = 0.72f;
-  const float width = 0.28f;
-  const float height = 0.07f;
-  const float gap = 0.025f;
+  const float y = 0.73f;
+  const float width = 0.325f;
+  const float height = 0.062f;
+  const float gap = 0.020f;
 
   std::vector<MenuItem> items = {
       {"astar", "A*", "1", x, y, width, height,
@@ -79,7 +81,9 @@ std::vector<MenuItem> buildMenu() {
        false},
       {"solve", "RESOLVER", "SP", x, y - 6 * (height + gap), width, height,
        false},
-      {"quit", "SALIR", "Q", x, y - 7 * (height + gap), width, height, false},
+      {"edit", "EDITAR", "E", x, y - 7 * (height + gap), width, height,
+       editConnections},
+      {"quit", "SALIR", "Q", x, y - 8 * (height + gap), width, height, false},
   };
   return items;
 }
@@ -117,7 +121,75 @@ void generateNewGraph() {
   globalGraph.endId = numNodes - 1;
   globalGraph.nodes[globalGraph.startId].state = NodeState::START;
   globalGraph.nodes[globalGraph.endId].state = NodeState::END;
+  selectedConnectionNode = -1;
   std::cout << "Nuevo grafo generado." << std::endl;
+}
+
+bool hasConnection(int u, int v) {
+  if (u < 0 || v < 0 || u >= (int)globalGraph.adj.size() ||
+      v >= (int)globalGraph.adj.size()) {
+    return false;
+  }
+
+  for (const auto &edge : globalGraph.adj[u]) {
+    if (edge.targetId == v)
+      return true;
+  }
+  return false;
+}
+
+void removeDirectedConnection(int from, int to) {
+  std::vector<Edge> &edges = globalGraph.adj[from];
+  for (auto it = edges.begin(); it != edges.end(); ++it) {
+    if (it->targetId == to) {
+      edges.erase(it);
+      return;
+    }
+  }
+}
+
+void toggleConnection(int u, int v) {
+  if (u == v)
+    return;
+
+  Pathfinder::resetGraph(globalGraph);
+  if (hasConnection(u, v)) {
+    removeDirectedConnection(u, v);
+    removeDirectedConnection(v, u);
+    std::cout << "Conexion eliminada: " << u << " - " << v << std::endl;
+    return;
+  }
+
+  float dx = globalGraph.nodes[u].x - globalGraph.nodes[v].x;
+  float dy = globalGraph.nodes[u].y - globalGraph.nodes[v].y;
+  float weight = std::sqrt(dx * dx + dy * dy);
+  globalGraph.adj[u].push_back({v, weight});
+  globalGraph.adj[v].push_back({u, weight});
+  std::cout << "Conexion agregada: " << u << " - " << v << std::endl;
+}
+
+int findNodeAt(float x, float y) {
+  int closestId = -1;
+  float closestDist = 0.045f;
+
+  for (const auto &node : globalGraph.nodes) {
+    float dx = node.x - x;
+    float dy = node.y - y;
+    float dist = std::sqrt(dx * dx + dy * dy);
+    if (dist < closestDist) {
+      closestDist = dist;
+      closestId = node.id;
+    }
+  }
+
+  return closestId;
+}
+
+void toggleEditConnections() {
+  editConnections = !editConnections;
+  selectedConnectionNode = -1;
+  std::cout << "Edicion de conexiones: "
+            << (editConnections ? "activada" : "desactivada") << std::endl;
 }
 
 void handleMenuAction(GLFWwindow *window, const std::string &id) {
@@ -136,6 +208,8 @@ void handleMenuAction(GLFWwindow *window, const std::string &id) {
     std::cout << "Grafo limpiado (manteniendo estructura)." << std::endl;
   } else if (id == "solve") {
     solveGraph();
+  } else if (id == "edit") {
+    toggleEditConnections();
   } else if (id == "quit") {
     glfwSetWindowShouldClose(window, GLFW_TRUE);
   }
@@ -164,6 +238,8 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action,
     glfwSetWindowShouldClose(window, GLFW_TRUE);
   } else if (key == GLFW_KEY_SPACE) {
     solveGraph();
+  } else if (key == GLFW_KEY_E) {
+    toggleEditConnections();
   }
   refreshMenu();
 }
@@ -188,9 +264,25 @@ void mouse_button_callback(GLFWwindow *window, int button, int action,
     bool insideY = y <= item.y && y >= item.y - item.height;
     if (insideX && insideY) {
       handleMenuAction(window, item.id);
-      break;
+      return;
     }
   }
+
+  if (!editConnections)
+    return;
+
+  int nodeId = findNodeAt(x, y);
+  if (nodeId < 0)
+    return;
+
+  if (selectedConnectionNode < 0) {
+    selectedConnectionNode = nodeId;
+    std::cout << "Nodo seleccionado para conexion: " << nodeId << std::endl;
+    return;
+  }
+
+  toggleConnection(selectedConnectionNode, nodeId);
+  selectedConnectionNode = -1;
 }
 
 int main() {
@@ -223,13 +315,14 @@ int main() {
   std::cout << "[N] Generar nuevo grafo" << std::endl;
   std::cout << "[C] Limpiar solución actual" << std::endl;
   std::cout << "[SPACE] Resolver camino" << std::endl;
+  std::cout << "[E] Editar conexiones (clic en dos nodos)" << std::endl;
   std::cout << "[Q] Salir" << std::endl;
 
   while (!glfwWindowShouldClose(window)) {
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    Visualizer::draw(globalGraph, menuItems);
+    Visualizer::draw(globalGraph, menuItems, selectedConnectionNode);
 
     glfwSwapBuffers(window);
     glfwPollEvents();

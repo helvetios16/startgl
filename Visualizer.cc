@@ -190,52 +190,47 @@ void drawText(const std::string &text, float x, float y, float scale, float r,
 
 void drawMenu(const std::vector<MenuItem> &menu) {
   // Panel de fondo
-  drawRect(0.59f, 0.88f, 0.40f, 0.96f, 0.11f, 0.12f, 0.14f);
-  drawRectOutline(0.59f, 0.88f, 0.40f, 0.96f, 0.18f, 0.19f, 0.22f);
+  drawRect(0.59f, 0.90f, 0.40f, 1.02f, 0.11f, 0.12f, 0.14f);
+  drawRectOutline(0.59f, 0.90f, 0.40f, 1.02f, 0.18f, 0.19f, 0.22f);
 
   // Header
-  drawRect(0.60f, 0.87f, 0.39f, 0.055f, 0.13f, 0.14f, 0.16f);
-  drawRectOutline(0.60f, 0.87f, 0.39f, 0.055f, 0.18f, 0.19f, 0.22f);
+  drawRect(0.60f, 0.89f, 0.39f, 0.055f, 0.13f, 0.14f, 0.16f);
+  drawRectOutline(0.60f, 0.89f, 0.39f, 0.055f, 0.18f, 0.19f, 0.22f);
 
-  drawText("MENU", 0.725f, 0.862f, 0.0052f, 0.60f, 0.63f, 0.67f);
+  drawText("MENU", 0.725f, 0.882f, 0.0052f, 0.60f, 0.63f, 0.67f);
 
   // Línea divisora bajo el título
   glColor3f(0.17f, 0.18f, 0.21f);
   glBegin(GL_LINES);
-  glVertex2f(0.62f, 0.812f);
-  glVertex2f(0.93f, 0.812f);
+  glVertex2f(0.62f, 0.832f);
+  glVertex2f(0.93f, 0.832f);
   glEnd();
 
   for (const auto &item : menu) {
-    const float itemWidth = item.width + 0.045f;
-
     if (item.selected) {
-      drawRect(item.x, item.y, itemWidth, item.height, 0.10f, 0.23f, 0.36f);
-      drawRectOutline(item.x, item.y, itemWidth, item.height, 0.18f, 0.42f, 0.67f);
+      drawRect(item.x, item.y, item.width, item.height, 0.10f, 0.23f, 0.36f);
+      drawRectOutline(item.x, item.y, item.width, item.height, 0.18f, 0.42f,
+                      0.67f);
     } else {
-      drawRect(item.x, item.y, itemWidth, item.height, 0.12f, 0.13f, 0.15f);
-      drawRectOutline(item.x, item.y, itemWidth, item.height, 0.17f, 0.18f, 0.21f);
+      drawRect(item.x, item.y, item.width, item.height, 0.12f, 0.13f, 0.15f);
+      drawRectOutline(item.x, item.y, item.width, item.height, 0.17f, 0.18f,
+                      0.21f);
     }
 
-    // Centrado vertical: el texto de drawText empieza en 'y' y baja 7*pixel
-    // altura del glifo = 7 * scale, queremos que quede centrado en el botón
     const float scale      = 0.0048f;
-    const float glyphH     = 7.0f * scale;          // altura real del glifo
-    const float textY      = item.y - (item.height - glyphH) * 0.5f; // centrado vertical
-
-    // Shortcut (columna izquierda, margen fijo)
+    const float glyphH     = 7.0f * scale;
+    const float textY      = item.y - (item.height - glyphH) * 0.5f;
+    
     drawText(item.shortcut,
              item.x + 0.012f,
              textY,
              scale,
              0.29f, 0.42f, 0.65f);
 
-    // Label (tras el shortcut: 1 char * (5 cols + gap) * scale + márgenes)
-    // ancho de un carácter = (5 píxeles + 0.75 gap) * scale = 5.75 * scale
     const float charW      = (5.0f + 0.75f) * scale;
     const float shortcutW  = item.shortcut.size() * charW;
     drawText(item.label,
-             item.x + 0.012f + shortcutW + 0.010f,  // margen después del shortcut
+             item.x + 0.012f + shortcutW + 0.010f,
              textY,
              scale,
              0.86f, 0.88f, 0.91f);
@@ -244,8 +239,9 @@ void drawMenu(const std::vector<MenuItem> &menu) {
 } // namespace
 
 void Visualizer::draw(const GraphData &graph,
-                      const std::vector<MenuItem> &menu) {
+                      const std::vector<MenuItem> &menu, int selectedNodeId) {
   // Dibujar conexiones
+  glLineWidth(2.0f);
   glBegin(GL_LINES);
   for (int i = 0; i < (int)graph.adj.size(); ++i) {
     for (const auto &edge : graph.adj[i]) {
@@ -282,9 +278,10 @@ void Visualizer::draw(const GraphData &graph,
     }
   }
   glEnd();
+  glLineWidth(1.0f);
 
   // Dibujar nodos
-  glPointSize(8.0f);
+  glPointSize(10.5f);
   glBegin(GL_POINTS);
   for (const auto &node : graph.nodes) {
     switch (node.state) {
@@ -310,6 +307,21 @@ void Visualizer::draw(const GraphData &graph,
     glVertex2f(node.x, node.y);
   }
   glEnd();
+
+  if (selectedNodeId >= 0 && selectedNodeId < (int)graph.nodes.size()) {
+    const Node &node = graph.nodes[selectedNodeId];
+    glPointSize(17.0f);
+    glColor3f(1.0f, 0.95f, 0.35f);
+    glBegin(GL_POINTS);
+    glVertex2f(node.x, node.y);
+    glEnd();
+
+    glPointSize(9.0f);
+    glColor3f(0.10f, 0.10f, 0.10f);
+    glBegin(GL_POINTS);
+    glVertex2f(node.x, node.y);
+    glEnd();
+  }
 
   drawMenu(menu);
 }
